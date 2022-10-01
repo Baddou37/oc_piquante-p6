@@ -25,6 +25,8 @@ exports.signup = (req, res, next) => {
         .catch(error => res.status(500).json({ error }));
 };
 
+// import environement variables
+require('dotenv').config();
 
 // Login controller
 exports.login = (req, res, next) => {
@@ -42,7 +44,7 @@ exports.login = (req, res, next) => {
                         userId: user._id,
                         token: jwt.sign(
                             { userId: user._id },
-                            'RANDOM_TOKEN_SECRET',
+                            `${process.env.TOKEN}`,
                             { expiresIn: '24h' }
                         )
                     });

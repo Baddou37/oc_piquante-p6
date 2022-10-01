@@ -19,7 +19,7 @@ const express = require("express");
 const app = express();
 
 // DB Piquante URI
-const PiquanteUri = `${protocol}://${mongodbId}:${mongodbPassword}@${mongodbServer}/${endpoint}`;
+const PiquanteUri = process.env.PIQUANTEURI;
 
 // connection to MongoDB
 const mongoose = require("mongoose");
@@ -49,11 +49,23 @@ db.on("error", (error) => console.error(error));
 //Intercept all request who have a json contentType to be able to use tu body.req
 app.use(express.json());
 
+// import cors package
+const cors = require('cors');
+
 // import the routes
-const userRoutes = require("./routes/usersRoute");
+const userRoute = require("./routes/usersRoute");
+const sauceRoute = require("./routes/saucesRoute");
 
 // use the routes
-app.use("/api/auth", userRoutes);
+app.use("/api/auth", userRoute);
+app.use("/api/sauces", sauceRoute);
+
+// import of path
+const path = require('path');
+
+
+// define the path where the image will be store
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Give an acces for server.js
 module.exports = app;
