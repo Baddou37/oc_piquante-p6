@@ -83,8 +83,8 @@ exports.deleteSauce = async (req, res, next) => {
             // if the user is not the author
             return res.status(403).json({ message: "Unauthorized" }); // send a response with the message
         } else {
-            const filename = sauce.imageUrl.split("/images")[1];
-            fs.unlink(`images/${filename}`, async () => {
+            const filename = sauce.imageUrl.split("/images")[1]; // get the image name
+            fs.unlink(`images/${filename}`, async () => { // delete the image
                 try {
                     // try to delete the sauce
                     const sauceToDelete = await Sauce.deleteOne({
@@ -135,7 +135,7 @@ exports.likes = (req, res) => {
     Sauce.findById(req.params.id)
         .then((sauce) => {
             switch (req.body.like) {
-                case 0:
+                case 0: // if the user cancel his like or dislike
                     // verifies if the user has authorisations to like or dislike
                     if (sauce.usersLiked.includes(req.auth.userId)) {
                         // return index of userId in liked array
@@ -174,7 +174,7 @@ exports.likes = (req, res) => {
                             .catch((error) => res.status(401).json({ error })); // send a response with the error if there is one
                     }
                     break;
-                case 1:
+                case 1: // if the user like the sauce
                     Sauce.findByIdAndUpdate(req.params.id, {
                         ...sauce, // spread the sauce object
                         likes: sauce.likes++, // increment the likes
@@ -188,7 +188,7 @@ exports.likes = (req, res) => {
                         )
                         .catch((error) => res.status(401).json({ error })); // send a response with the error if there is one
                     break;
-                case -1:
+                case -1: // if the user dislike the sauce
                     Sauce.findByIdAndUpdate(req.params.id, {
                         ...sauce, // spread the sauce object
                         dislikes: sauce.dislikes++, // increment the dislikes
