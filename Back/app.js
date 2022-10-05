@@ -4,14 +4,6 @@
 // load env variables
 const dotenv = require("dotenv").config();
 
-// import env variables
-const mongodbPassword = process.env.MONGODBPWD;
-const mongodbServer = process.env.MONGODBSERVER;
-const mongodbId = process.env.MONGODBID;
-const protocol = process.env.PROTOCOL;
-const endpoint = process.env.ENDPOINT;
-
-
 // import Express
 const express = require("express");
 
