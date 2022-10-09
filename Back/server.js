@@ -56,4 +56,4 @@ server.on('listening', () => {
   console.log('Listening on ' + bind);
 });
 
-server.listen(port);
+server.listen(port, () => console.log(`Notre serveur fonctionne sur : http://localhost:${port}`));
