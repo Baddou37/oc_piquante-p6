@@ -131,50 +131,103 @@ exports.modifySauce = (req, res, next) => {
     });
 };
 
-// middleware that like or dislike a sauce
-exports.likes = (req, res, next) => {
-    Sauce.findById(req.params.id).then((sauce) => {
-        let like = 0; // set the like to 0
-        let dislike = 0; // set the dislike to 0
-        if (sauce.usersLiked.includes(req.body.userId)) like = 1; // if the user already liked the sauce
-        if (sauce.usersDisliked.includes(req.body.userId)) dislike = 1; // if the user already disliked the sauce
-
-        // if the user like the sauce
-        if (req.body.like === 1 && !like) {
-            Sauce.updateOne({_id: req.params.id,}, {
-                $push: {usersLiked: req.body.userId},
-                $pull: {usersDisliked: req.body.userId},
-                $inc: {
-                    likes: 1,
-                    dislikes: -dislike
-                }
+// middleware who manage likes and dislikes into the db
+exports.likes = (req, res) => {
+    Sauce.findById(req.params.id)
+      .then(sauce => {
+        switch (req.body.like) {
+          case 0:
+            // verifies if the user has authorisations to like or dislike
+            if (sauce.usersLiked.includes(req.auth.userId)) {
+              // return index of userId in liked array
+              const indexOfUser = sauce.usersLiked.indexOf(req.auth.userId);
+              Sauce.findByIdAndUpdate(req.params.id, {
+                ...sauce,
+                likes: sauce.likes--,
+                // remove current userId from liked array
+                usersLiked: sauce.usersLiked.splice(indexOfUser, 1),
               })
-
-        // if the user dislike the sauce
-        } else if (req.body.like === -1 && !dislike) {
-            Sauce.updateOne({_id: req.params.id,}, {
-                $push: {usersDisliked: req.body.userId},
-                $pull: {usersLiked: req.body.userId},
-                $inc: {
-                    dislikes: 1,
-                    likes: -like
-                },
+                .then(() => res.status(200).json({ message: 'Sauce unliked' }))
+                .catch(error => res.status(401).json({ error }));
+            }
+            if (sauce.usersDisliked.includes(req.auth.userId)) {
+              const indexOfUser = sauce.usersDisliked.indexOf(req.auth.userId);
+              Sauce.findByIdAndUpdate(req.params.id, {
+                ...sauce,
+                dislikes: sauce.dislikes--,
+                usersDisliked: sauce.usersDisliked.splice(indexOfUser, 1),
               })
-
-        // if the user cancel his like or dislike
-        } else if (req.body.like === 0) {
-            Sauce.updateOne({_id: req.params.id,}, {
-                $pull: {
-                    usersLiked: req.body.userId,
-                    usersDisliked: req.body.userId
-                },
-                $inc: {
-                    likes: -like,
-                    dislikes: -dislike
-                }
+                .then(() => res.status(200).json({ message: 'Sauce undisliked' }))
+                .catch(error => res.status(401).json({ error }));
+            }
+            break;
+          case 1:
+            Sauce.findByIdAndUpdate(req.params.id, {
+              ...sauce,
+              likes: sauce.likes++,
+              usersLiked: sauce.usersLiked.push(req.auth.userId),
             })
+              .then(() => res.status(200).json({ message: 'Sauce liked !' }))
+              .catch(error => res.status(401).json({ error }));
+            break;
+          case -1:
+            Sauce.findByIdAndUpdate(req.params.id, {
+              ...sauce,
+              dislikes: sauce.dislikes++,
+              usersDisliked: sauce.usersDisliked.push(req.auth.userId),
+            })
+              .then(() => res.status(200).json({ message: 'Sauce disliked...' }))
+              .catch(error => res.status(401).json({ error }));
+            break;
         }
-        res.status(200).json({ message: "Sauce update !" })
-    })
-    .catch((error) => res.status(400).json({ error }));
-};
+      })
+      .catch(error => res.status(401).json({ error }));
+  };
+
+// // middleware that like or dislike a sauce
+// exports.likes = (req, res, next) => {
+//     Sauce.findById(req.params.id).then((sauce) => {
+//         let like = 0; // set the like to 0
+//         let dislike = 0; // set the dislike to 0
+//         if (sauce.usersLiked.includes(req.body.userId)) like = 1; // if the user already liked the sauce
+//         if (sauce.usersDisliked.includes(req.body.userId)) dislike = 1; // if the user already disliked the sauce
+
+//         // if the user like the sauce
+//         if (req.body.like === 1 && !like) {
+//             Sauce.updateOne({_id: req.params.id,}, {
+//                 $push: {usersLiked: req.body.userId},
+//                 $pull: {usersDisliked: req.body.userId},
+//                 $inc: {
+//                     likes: 1,
+//                     dislikes: -dislike
+//                 }
+//               })
+
+//         // if the user dislike the sauce
+//         } else if (req.body.like === -1 && !dislike) {
+//             Sauce.updateOne({_id: req.params.id,}, {
+//                 $push: {usersDisliked: req.body.userId},
+//                 $pull: {usersLiked: req.body.userId},
+//                 $inc: {
+//                     dislikes: 1,
+//                     likes: -like
+//                 },
+//               })
+
+//         // if the user cancel his like or dislike
+//         } else if (req.body.like === 0) {
+//             Sauce.updateOne({_id: req.params.id,}, {
+//                 $pull: {
+//                     usersLiked: req.body.userId,
+//                     usersDisliked: req.body.userId
+//                 },
+//                 $inc: {
+//                     likes: -like,
+//                     dislikes: -dislike
+//                 }
+//             })
+//         }
+//         res.status(200).json({ message: "Sauce update !" })
+//     })
+//     .catch((error) => res.status(400).json({ error }));
+// };
